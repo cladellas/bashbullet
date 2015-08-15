@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Bashbullet	: a simple pushbullet notification daemon for linux users written in bash
+# Author	: Boteium - https://github.com/Boteium
+# Description	: notifications are displayed through notify-osd.
+# 		  received pushes would be saved at ~/.pushbullet/received with timestamp and type of push as filename
+
+
+# API_KEY Configration file
+if [ -f ~/.bashbullet/config ];then
+	source ~/.bashbullet/config
+else
+	mkdir -p ~/.bashbullet/received
+	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
+	exit 0
+fi
+
+# Getting all messages in the past 15 seconds by curl
+# sed/grep/tail are for extracting only the last message
+# Bug :: if two pushes are seperated only 1 second away, chances are only the last one would be received.
+
+get_last_15sec_msg(){
+	RAWMSG=`curl -s --header "Authorization: Bearer $API_KEY" \
+		https://api.pushbullet.com/v2/pushes?modified_after=$1`
+	DISMISSED=`echo "$RAWMSG"|sed -e 's/dismissed/to_rm/1' -e 's/.*to_rm\"://'|cut -d , -f1`
+
+	# ignore push deleting event
+	if [ "$DISMISSED" != "true" ];then
+		TYPE=`echo "$RAWMSG"|sed -e 's/type/to_rm/1' -e 's/.*to_rm\"://'|cut -d \" -f2`
+		MSG=`json_pp <<< "$RAWMSG" | egrep 'title|body|file_url|\"url'|cut -d \" -f4|sed 1q`
+		killall notify-osd 2>/dev/null
+		notify-send "$TYPE" "$MSG"
+		echo "$MSG" >> ~/.bashbullet/received/${2}_${TYPE}
+	fi
+}
+
+## Monitoring websocket for push event
+tickle_detect(){
+	while true ; do
+	    if read line; then
+		if grep tickle <<< $line >/dev/null 2>/dev/null;then
+			get_last_15sec_msg `date --date="-15sec" +%s` `date +%s`
+		fi
+	    fi
+	done
+}
+
+
+wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
