@@ -3,8 +3,9 @@ Bashbullet
  a simple pushbullet notification daemon for linux users written in bash  
 
 ### Prerequisite  
- node.js and wscat  
- jshon
+ node.js  
+ wscat  
+ jshon  
  notify-osd  
 
 ### Installation  

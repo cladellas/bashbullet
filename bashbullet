@@ -17,26 +17,49 @@ fi
 
 IFS='
 '
+
+# Pushbullet api url
 CL(){
         curl -s --header "Authorization: Bearer $API_KEY" https://api.pushbullet.com/v2/${1}
 }
 
-# Getting all messages in the past 15 seconds by curl
-# sed/grep/tail are for extracting only the last message
-# Bug :: if two pushes are seperated only 1 second away, chances are only the last one would be received.
+# Convert device id to name
+decode_name(){
+	for(( i=0 ; i<${#DEVS[@]} ; i++ ));do
+		if [ $1 == ${IDEN[$i]} ];then
+			echo "${DEVS[$i]}"
+			return 0;
+		fi
+	done
+}
 
+# Get all messages in the past 15 seconds and display only the last one
+# Bug :: if two pushes are seperated only 1 second away, chances are only the last one would be received.
 get_last_15sec_msg(){
 	RAWMSG=`CL pushes?modified_after=$1`
-	#echo "$RAWMSG" > /tmp/rawmsg
 
-	# ignore push deleting event
+	# if it's push-deleting event, ignore it.
 	if [ `jshon -e pushes -e 0 -e dismissed <<< "$RAWMSG"` != "true" ];then
-		TYPE=`jshon -e pushes -e 0 -e type <<< "$RAWMSG"|tr -d \"`
-		MSG=`jshon -e pushes -e 0 <<< "$RAWMSG" | egrep 'title|body|file_url|\"url'|cut -d \" -f4|sed 1q`
-		TIME=`jshon -e pushes -e 0 -e created <<< "$RAWMSG"`
-		killall notify-osd 2>/dev/null
-		notify-send "$TYPE" "$MSG"
-		echo "$MSG" >> ~/.bashbullet/received/${TIME}_${TYPE}
+		TO=`jshon -e pushes -e 0 -e target_device_iden <<< "$RAWMSG"|tr -d \"`
+		if [ -z $TO ];then
+			TO="all"
+		else
+			TO=`decode_name $TO`
+		fi
+
+		# handle receiver device filter (if set in config)
+		if [[ -z $target_filter ||  "$target_filter" == "$TO" || "$TO" == all ]];then
+			TYPE=`jshon -e pushes -e 0 -e type <<< "$RAWMSG"|tr -d \"`
+			MSG=`jshon -e pushes -e 0 <<< "$RAWMSG" | egrep 'title|body|file_url|\"url'|cut -d \" -f4|sed 1q`
+			TIME=`jshon -e pushes -e 0 -e created <<< "$RAWMSG"`
+			FROM=$(decode_name `jshon -e pushes -e 0 -e source_device_iden <<< "$RAWMSG"|tr -d \"`)
+
+			# if it's not, send notification and save
+			killall notify-osd 2>/dev/null
+			notify-send "${TYPE} : from ${FROM} to ${TO}" "$MSG"
+			TO=`echo $TO|tr -d ' '`
+			( echo "FROM $FROM" ; echo  "$MSG" ) >> ~/.bashbullet/received/${TIME}_${TO}_${TYPE}
+		fi
 	fi
 }
 
@@ -51,5 +74,8 @@ tickle_detect(){
 	done
 }
 
+DEVS_RAW=`CL devices`
+DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
+IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
 
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
