@@ -4,7 +4,7 @@ Bashbullet
 
 ### Prerequisite  
  node.js and wscat  
- perl (json_pp)  
+ jshon
  notify-osd  
 
 ### Installation  

@@ -15,22 +15,28 @@ else
 	exit 0
 fi
 
+IFS='
+'
+CL(){
+        curl -s --header "Authorization: Bearer $API_KEY" https://api.pushbullet.com/v2/${1}
+}
+
 # Getting all messages in the past 15 seconds by curl
 # sed/grep/tail are for extracting only the last message
 # Bug :: if two pushes are seperated only 1 second away, chances are only the last one would be received.
 
 get_last_15sec_msg(){
-	RAWMSG=`curl -s --header "Authorization: Bearer $API_KEY" \
-		https://api.pushbullet.com/v2/pushes?modified_after=$1`
-	DISMISSED=`echo "$RAWMSG"|sed -e 's/dismissed/to_rm/1' -e 's/.*to_rm\"://'|cut -d , -f1`
+	RAWMSG=`CL pushes?modified_after=$1`
+	#echo "$RAWMSG" > /tmp/rawmsg
 
 	# ignore push deleting event
-	if [ "$DISMISSED" != "true" ];then
-		TYPE=`echo "$RAWMSG"|sed -e 's/type/to_rm/1' -e 's/.*to_rm\"://'|cut -d \" -f2`
-		MSG=`json_pp <<< "$RAWMSG" | egrep 'title|body|file_url|\"url'|cut -d \" -f4|sed 1q`
+	if [ `jshon -e pushes -e 0 -e dismissed <<< "$RAWMSG"` != "true" ];then
+		TYPE=`jshon -e pushes -e 0 -e type <<< "$RAWMSG"|tr -d \"`
+		MSG=`jshon -e pushes -e 0 <<< "$RAWMSG" | egrep 'title|body|file_url|\"url'|cut -d \" -f4|sed 1q`
+		TIME=`jshon -e pushes -e 0 -e created <<< "$RAWMSG"`
 		killall notify-osd 2>/dev/null
 		notify-send "$TYPE" "$MSG"
-		echo "$MSG" >> ~/.bashbullet/received/${2}_${TYPE}
+		echo "$MSG" >> ~/.bashbullet/received/${TIME}_${TYPE}
 	fi
 }
 
@@ -39,7 +45,7 @@ tickle_detect(){
 	while true ; do
 	    if read line; then
 		if grep tickle <<< $line >/dev/null 2>/dev/null;then
-			get_last_15sec_msg `date --date="-15sec" +%s` `date +%s`
+			get_last_15sec_msg `date --date="-15sec" +%s`
 		fi
 	    fi
 	done
