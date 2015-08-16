@@ -4,5 +4,5 @@
 API_KEY=''
 
 ## target devices filter
-## will only display pushes sent to this device if this variable is set
+## will only display pushes sent to desinated device if this variable is set
 # target_filter='DEVICE NAME'
