@@ -7,13 +7,59 @@
 
 
 # API_KEY Configration file
+mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
 	source ~/.bashbullet/config
 else
-	mkdir -p ~/.bashbullet/received
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
 	exit 0
 fi
+
+# initialize yad systray icon
+PIPE=$(mktemp -u --tmpdir ${0##*/}.XXXXXXXX)
+mkfifo $PIPE
+
+# attach a file descriptor to the file
+exec 3<> $PIPE
+
+# add handler to manage process shutdown
+function on_exit() {
+    echo "quit" >&3
+    rm -f $PIPE
+}
+trap on_exit EXIT
+
+# add handler for tray icon left click
+function on_click() {
+	DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
+		cat ${HOME}/.bashbullet/received/*_* > ${HOME}/.bashbullet/.disp_tmp
+		yad --text-info --width=500 --height=300 --title "Bashbullet Inbox" \
+			--filename=${HOME}/.bashbullet/.disp_tmp \
+			--button "archive all:1" --button "dismiss:2" --button "browse incoming folder:3"
+		case  $? in
+			1)
+			mv ${HOME}/.bashbullet/received/*_* ${HOME}/.bashbullet/received/archived/
+			echo icon:"$DIR/pushbullet.svg" > ${1} ;;
+			3)
+			xdg-open ${HOME}/.bashbullet/ ;;
+		esac
+	else
+		notify-send "No new message !!"
+	fi
+}
+export -f on_click
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+# create the notification icon
+
+yad --notification                  \
+    --title bashbullet \
+    --listen                        \
+    --image="$DIR/pushbullet.svg"              \
+    --text="Notification tooltip"   \
+    --command="bash -c \"on_click $PIPE\"" <&3 &
 
 IFS='
 '
@@ -47,19 +93,17 @@ disp_save(){
 	if [[ -z $target_filter ||  "$target_filter" == "$TO" || "$TO" == all ]];then
 		TYPE=`j_push $ENTRY -e type|tr -d \"`
 		FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
-		MSG=`j_push $ENTRY | egrep 'title|body|file_url|\"url'|cut -d \" -f4|sed 1q`
+		MSG=`j_push $ENTRY | egrep 'title|body|file_url|\"url'|cut -d \" -f4`
 
 		killall notify-osd 2>/dev/null
 		notify-send "${TYPE} : from ${FROM} to ${TO}" "$MSG"
-		TO=`echo $TO|tr -d ' '`
-		( echo "FROM $FROM" ; echo  "$MSG" ) >> ~/.bashbullet/received/${TIME}_${TO}_${TYPE}
+		( echo "FROM $FROM TO $TO" ; eval echo  \\ \\ $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 	fi
 }
 
-# Get all messages in the past 15 seconds and display new ones
+# Get all messages in the past 15 seconds and only display new ones
 get_last_15sec_msg(){
 	RAWMSG=`CL pushes?modified_after=$1`
-	echo "$RAWMSG" > /tmp/rawmsg
 
 	# handling multiple events within a second problem
 	CNT=`jshon -e pushes <<< "$RAWMSG"|grep \"created\"|wc -l`
@@ -79,6 +123,7 @@ tickle_detect(){
 	    if read line; then
 		if grep tickle <<< $line >/dev/null 2>/dev/null;then
 			get_last_15sec_msg `date --date="-15sec" +%s`
+			echo icon:mail-unread > $PIPE
 		fi
 	    fi
 	done
@@ -87,5 +132,9 @@ tickle_detect(){
 DEVS_RAW=`CL devices`
 DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
 IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
+
+if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
+	echo icon:mail-unread > $PIPE
+fi
 
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
