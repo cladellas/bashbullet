@@ -21,7 +21,7 @@ else
 fi
 
 # initialize yad systray icon
-PIPE=$(mktemp -u --tmpdir ${0##*/}.XXXXXXXX)
+export PIPE=`mktemp -u --tmpdir ${0##*/}.XXXXXXXX`
 mkfifo $PIPE
 
 # attach a file descriptor to the file
@@ -34,29 +34,75 @@ on_exit() {
 }
 trap on_exit EXIT
 
+new_push(){
+	IFS='
+'
+	source ~/.bashbullet/config
+        DEVS_RAW=`curl -s --header "Authorization: Bearer $API_KEY" https://api.pushbullet.com/v2/devices`
+        DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
+        IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
+        PU(){
+		if curl -s "https://api.pushbullet.com/v2/pushes" \
+                 -u "$API_KEY": -d device_iden="$1" -d type="$2" -d title="$3" \
+                 --data-urlencode body="`printf $4`" -X POST |\
+		grep 'active":true' >/dev/null;then notify-send "pushed";fi
+		# use printf to translate \n to newline
+        }
+        decode_identity(){
+                for(( i=0 ; i<${#IDEN[@]} ; i++ ));do
+                        if [ "$1" == "${DEVS[$i]}" ];then
+                                echo "${IDEN[$i]}"
+                                return 0;
+                        fi
+                done
+        }
+        DEVICES=`for i in ${DEVS[@]};do echo -n \;$i;done|cut -c 2-`
+
+        IFS='|'
+        NOTE=(`yad --form --height=300 \
+              --field="Device":CB "${DEVICES}" \
+              --field="Title" "" --field="Note":TXT "" --item-separator=';' \
+              --button="Discard:1" --button="Push it:2"`)
+        if [ $? == 2 ];then
+                [ -z ${NOTE[1]} ] && NOTE[1]="untitled"
+                PU `decode_identity ${NOTE[0]}`  note "${NOTE[1]}" "${NOTE[2]}"
+        fi
+}
+export -f new_push
 # add handler for tray icon left click
 on_click() {
-	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
-		cat ${HOME}/.bashbullet/received/*_* > ${HOME}/.bashbullet/.disp_tmp
-		yad --text-info --width=500 --height=300 --title "Bashbullet Inbox" \
-			--filename=${HOME}/.bashbullet/.disp_tmp --window-icon="$2/pushbullet.svg" \
-			--button "Close:1" --button "Archive all:2" --button "mark all as read:3" --button "Incoming Folder:4"
-		case  $? in
-			2)
-			mv ${HOME}/.bashbullet/received/*_* ${HOME}/.bashbullet/received/archived/
-			echo icon:"$2/pushbullet.svg" > ${1} ;;
-			3)
-			echo icon:"$2/pushbullet.svg" > ${1} ;;
-			4)
-			xdg-open ${HOME}/.bashbullet/received ;;
-		esac
+	YADKEY=${RANDOM}
+	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` == 0 ];then
+		echo "No new messages" > ${HOME}/.bashbullet/.disp_tmp
 	else
-		notify-send "No new message !!"
+		cat ${HOME}/.bashbullet/received/*_* > ${HOME}/.bashbullet/.disp_tmp
 	fi
+	if [ `find ${HOME}/.bashbullet/received/archived/* 2>/dev/null|wc -l` == 0 ];then
+		echo "No archived messages" > ${HOME}/.bashbullet/.arch_tmp
+	else
+		cat ${HOME}/.bashbullet/received/archived/* > ${HOME}/.bashbullet/.arch_tmp
+	fi
+
+	yad --plug=$YADKEY --tabnum=1 --text-info --filename=${HOME}/.bashbullet/.disp_tmp &
+	yad --plug=$YADKEY --tabnum=2 --text-info --filename=${HOME}/.bashbullet/.arch_tmp &
+
+	yad --mouse --notebook --key=$YADKEY --width=600 --height=400 --title "Bashbullet Inbox" \
+		--window-icon="${DIR}/pushbullet.svg" --tab="New Messages" --tab="Archived Messages" --title "Bashbullet Inbox" \
+		--button "Close:1" --button "Mark all as read:2" --button "Archive all:3" --button "New push:4"
+	case  $? in
+		2)
+		echo icon:"${DIR}/pushbullet.svg" > ${PIPE} ;;
+		3)
+		mv ${HOME}/.bashbullet/received/*_* ${HOME}/.bashbullet/received/archived/
+		echo icon:"${DIR}/pushbullet.svg" > ${PIPE} ;;
+		4)
+		new_push
+		;;
+	esac
 }
 export -f on_click
 
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+export DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 # create the notification icon
 
@@ -64,8 +110,8 @@ yad --notification                  \
     --title bashbullet \
     --listen                        \
     --image="$DIR/pushbullet.svg"              \
-    --text="Notification tooltip"   \
-    --command="bash -c \"on_click $PIPE $DIR\"" <&3 &
+    --text="click to display new message"   \
+    --command="bash -c \"on_click\"" <&3 &
 
 IFS='
 '
@@ -99,7 +145,11 @@ disp_save(){
 	# handle receiver device filter (if set in config)
 	if [[ -z $target_filter ||  "$target_filter" == "$TO" || "$TO" == all ]];then
 		TYPE=`j_push $ENTRY -e type|tr -d \"`
-		FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
+		if [ -z `j_push $ENTRY -e source_device_iden` ];then
+			FROM=$(decode_name `j_push $ENTRY -e sender_name |tr -d \"`)
+		else
+			FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
+		fi
 		MSG=`j_push $ENTRY | egrep 'title|body|file_url|\"url'|cut -d \" -f4`
 
 		killall notify-osd 2>/dev/null
@@ -143,5 +193,6 @@ IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
 if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
 	echo icon:mail-unread > $PIPE
 fi
+
 
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
