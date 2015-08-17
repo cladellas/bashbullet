@@ -15,6 +15,11 @@ fi
 [ ! -x ~/.bashbullet/received/archived ] && mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
 	source ~/.bashbullet/config
+	if [ -f ~/.bashbullet/.last_timestamp ];then
+		LASTTIME=`cat ~/.bashbullet/.last_timestamp`
+	else
+		date +%s > ~/.bashbullet/.last_timestamp
+	fi
 else
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
 	exit 0
@@ -59,7 +64,7 @@ new_push(){
         DEVICES=`for i in ${DEVS[@]};do echo -n \;$i;done|cut -c 2-`
 
         IFS='|'
-        NOTE=(`yad --form --height=300 \
+        NOTE=(`yad --mouse --form --height=300 \
               --field="Device":CB "${DEVICES}" \
               --field="Title" "" --field="Note":TXT "" --item-separator=';' \
               --button="Discard:1" --button="Push it:2"`)
@@ -75,12 +80,12 @@ on_click() {
 	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` == 0 ];then
 		echo "No new messages" > ${HOME}/.bashbullet/.disp_tmp
 	else
-		cat ${HOME}/.bashbullet/received/*_* > ${HOME}/.bashbullet/.disp_tmp
+		tac ${HOME}/.bashbullet/received/*_* |tac > ${HOME}/.bashbullet/.disp_tmp
 	fi
 	if [ `find ${HOME}/.bashbullet/received/archived/* 2>/dev/null|wc -l` == 0 ];then
 		echo "No archived messages" > ${HOME}/.bashbullet/.arch_tmp
 	else
-		cat ${HOME}/.bashbullet/received/archived/* > ${HOME}/.bashbullet/.arch_tmp
+		tac ${HOME}/.bashbullet/received/archived/*|tac > ${HOME}/.bashbullet/.arch_tmp
 	fi
 
 	yad --plug=$YADKEY --tabnum=1 --text-info --filename=${HOME}/.bashbullet/.disp_tmp &
@@ -146,7 +151,7 @@ disp_save(){
 	if [[ -z $target_filter ||  "$target_filter" == "$TO" || "$TO" == all ]];then
 		TYPE=`j_push $ENTRY -e type|tr -d \"`
 		if [ -z `j_push $ENTRY -e source_device_iden` ];then
-			FROM=$(decode_name `j_push $ENTRY -e sender_name |tr -d \"`)
+			FROM=`j_push $ENTRY -e sender_name |tr -d \"`
 		else
 			FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
 		fi
@@ -154,18 +159,18 @@ disp_save(){
 
 		killall notify-osd 2>/dev/null
 		notify-send "${TYPE} : from ${FROM} to ${TO}" "$MSG"
-		( echo "FROM $FROM TO $TO" ; eval echo  \\ \\ $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
+		( eval echo "FROM $FROM TO $TO";echo  \\ \\ $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 	fi
 }
 
 # Get all messages in the past 15 seconds and only display new ones
-get_last_15sec_msg(){
+get_msg(){
 	RAWMSG=`CL pushes?modified_after=$1`
 
 	# handling multiple events within a second problem
 	CNT=`jshon -e pushes <<< "$RAWMSG"|grep \"created\"|wc -l`
 	for(( ENTRY=0 ; ENTRY < $CNT ; ENTRY++ ));do
-		if [ `j_push $ENTRY -e dismissed` == "false" ];then
+		if [ `j_push $ENTRY -e active` == "true" ];then
 			TIME=`j_push $ENTRY -e created`
 			if [ ! -f ~/.bashbullet/received/${TIME}* ];then
 				disp_save
@@ -179,8 +184,9 @@ tickle_detect(){
 	while true ; do
 	    if read line; then
 		if grep tickle <<< $line >/dev/null 2>/dev/null;then
-			get_last_15sec_msg `date --date="-15sec" +%s`
+			get_msg `date --date="-15sec" +%s`
 			echo icon:mail-unread > $PIPE
+			date +%s > ~/.bashbullet/.last_timestamp
 		fi
 	    fi
 	done
@@ -194,5 +200,7 @@ if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
 	echo icon:mail-unread > $PIPE
 fi
 
+get_msg $LASTTIME
+date +%s > ~/.bashbullet/.last_timestamp
 
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
