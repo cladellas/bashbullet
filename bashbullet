@@ -12,7 +12,7 @@ e.g. screen -S bashbullet-session -dm ./bashbullet"
 fi
 
 # API_KEY Configration file
-mkdir -p ~/.bashbullet/received/archived
+[ ! -x ~/.bashbullet/received/archived ] && mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
 	source ~/.bashbullet/config
 else
@@ -40,16 +40,18 @@ on_click() {
 		cat ${HOME}/.bashbullet/received/*_* > ${HOME}/.bashbullet/.disp_tmp
 		yad --text-info --width=500 --height=300 --title "Bashbullet Inbox" \
 			--filename=${HOME}/.bashbullet/.disp_tmp --window-icon="$2/pushbullet.svg" \
-			--button "archive all:1" --button "dismiss:2" --button "browse incoming folder:3"
+			--button "Close:1" --button "Archive all:2" --button "mark all as read:3" --button "Incoming Folder:4"
 		case  $? in
-			1)
+			2)
 			mv ${HOME}/.bashbullet/received/*_* ${HOME}/.bashbullet/received/archived/
 			echo icon:"$2/pushbullet.svg" > ${1} ;;
 			3)
+			echo icon:"$2/pushbullet.svg" > ${1} ;;
+			4)
 			xdg-open ${HOME}/.bashbullet/received ;;
 		esac
 	else
-		DISPLAY=:0 notify-send "No new message !!"
+		notify-send "No new message !!"
 	fi
 }
 export -f on_click
@@ -67,6 +69,7 @@ yad --notification                  \
 
 IFS='
 '
+[ -z $DISPLAY ] && DISPLAY=:0
 
 # Pushbullet api url
 CL(){   curl -s --header "Authorization: Bearer $API_KEY" https://api.pushbullet.com/v2/${1} ;}
@@ -100,7 +103,7 @@ disp_save(){
 		MSG=`j_push $ENTRY | egrep 'title|body|file_url|\"url'|cut -d \" -f4`
 
 		killall notify-osd 2>/dev/null
-		DISPLAY=:0 notify-send "${TYPE} : from ${FROM} to ${TO}" "$MSG"
+		notify-send "${TYPE} : from ${FROM} to ${TO}" "$MSG"
 		( echo "FROM $FROM TO $TO" ; eval echo  \\ \\ $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 	fi
 }

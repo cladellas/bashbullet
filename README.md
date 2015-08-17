@@ -1,6 +1,10 @@
 Bashbullet  
 ===================================  
  a simple X11 pushbullet notification daemon for linux desktop written in bash  
+   
+ bashbullet would only display message that being sent while bashbullet is running  
+ setting up a new browser client for message management but disable browser notification and use bashbullet for notification is recommended  
+ see config_sample to set up target_filter to only display message sent to a certain device  
 
 ### Prerequisite  
  node.js  
@@ -10,18 +14,16 @@ Bashbullet
  yad
 
 ### Installation  
- Excute this script directly. 
- There is no need to install.  
+ Excute this script directly. There is no need to install.  
   
  git clone https://github.com/Boteium/bashbullet.git  
  cd bashbullet && ./bashbullet  
 
-### Configuration  
+### Minimal configuration  
  place your api key in ~/.bashbullet/config  
   API_KEY="my_pushbullet_api_key"  
- can be configured to only display message sent to a certain device  
 
 ### Running in the background
- Bashbullet use wscat to read websocket message, which will not work propely if it's running in the background. Make sure it is started by screen/systemd/upstart.  
+ Bashbullet uses wscat to read websocket message, which would not work propely if it's running in the background. Make sure bashbullet is started by screen/systemd/upstart.  
  For example ::  
  screen -S bashbullet-session -dm ./bashbullet
