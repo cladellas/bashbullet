@@ -65,7 +65,7 @@ new_push(){
               --button="Discard:1" --button="Push it:2"`)
         if [ $? == 2 ];then
                 [ -z ${NOTE[1]} ] && NOTE[1]="untitled"
-                PU `decode_identity ${NOTE[0]}`  note "${NOTE[1]}" "${NOTE[2]}"
+                PU `decode_identity "${NOTE[0]}"`  note "${NOTE[1]}" "${NOTE[2]}"
         fi
 }
 export -f new_push
