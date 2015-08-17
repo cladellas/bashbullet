@@ -2,7 +2,7 @@ Bashbullet
 ===================================  
  a simple X11 pushbullet notification daemon for linux desktop written in bash  
    
- bashbullet would only display message that being sent while bashbullet is running  
+ bashbullet would only display new message while it is running  
  setting up a new browser client for message management but disable browser notification and use bashbullet for notification is recommended  
  see config_sample to set up target_filter to only display message sent to a certain device  
 
