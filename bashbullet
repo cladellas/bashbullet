@@ -5,23 +5,24 @@
 # Description	: notifications are displayed through notify-osd.
 # 		  received pushes would be saved at ~/.pushbullet/received with timestamp and type of push as filename
 
+# running in the background parameter
 export DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 [[ ! -z "$1" && "$1" == '-scr' ]] && screen -S bashbullet-session -dm $DIR/bashbullet && exit
 
+# display warning message
 if ! ps -o stat= -p $$ |grep + >/dev/null;then
 notify-send Warning "Bashbullet is running in the background
 Make sure to start it by screen/systemd/upstart or it will not work
 e.g. screen -S bashbullet-session -dm ./bashbullet"
 fi
 
-# API_KEY Configration file
+# Read Configration file
 [ ! -x ~/.bashbullet/received/archived ] && mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
 	source ~/.bashbullet/config
-	if [ ! -f ~/.bashbullet/.last_timestamp ];then
-		date +%s > ~/.bashbullet/.last_timestamp
-	fi
+	[ ! -f ~/.bashbullet/.last_timestamp ] && date +%s > ~/.bashbullet/.last_timestamp
 	LASTTIME=`cat ~/.bashbullet/.last_timestamp`
+	[ -z $allow_file_shorten ] && allow_file_shorten=false
 else
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
 	exit 0
@@ -159,7 +160,9 @@ disp_save(){
 		fi
 		MSG=`j_push $ENTRY | egrep 'title|body'|cut -d \" -f4`
 		URL=`j_push $ENTRY | egrep '_url|\"url'|cut -d \" -f4`
-		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
+		if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
+			[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
+		fi
 
 		killall notify-osd 2>/dev/null
 		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"

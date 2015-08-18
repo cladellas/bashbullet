@@ -7,6 +7,10 @@ API_KEY=''
 ## will only display pushes sent to designated device if this variable is set
 # target_filter='DEVICE NAME'
 
-# url shortener [ require surl python command ]
-# can be replaced by any url shortener command that reads from stdin and output to stdout
+## url shortener [ require surl python command ]
+## can be replaced by any url shortener command that reads from stdin and output to stdout
+## Warning :: url shortener might cause potential exposure of link. consider before use
 # SHORT_URL='surl -s is.gd'
+
+## file link would not be shorten by default. [ due to privacy concern]
+allow_file_shorten='false'
