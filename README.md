@@ -29,5 +29,4 @@ Bashbullet
 ### Running in the background
  Bashbullet uses wscat to read websocket message, which would not work propely if it's
  running in the background. Make sure bashbullet is started by screen/systemd/upstart.  
- For example ::  
- screen -S bashbullet-session -dm ./bashbullet
+ "bashbullet -scr" will start bashbullt in the background using screen  

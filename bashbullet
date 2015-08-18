@@ -18,11 +18,10 @@ fi
 [ ! -x ~/.bashbullet/received/archived ] && mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
 	source ~/.bashbullet/config
-	if [ -f ~/.bashbullet/.last_timestamp ];then
-		LASTTIME=`cat ~/.bashbullet/.last_timestamp`
-	else
+	if [ ! -f ~/.bashbullet/.last_timestamp ];then
 		date +%s > ~/.bashbullet/.last_timestamp
 	fi
+	LASTTIME=`cat ~/.bashbullet/.last_timestamp`
 else
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
 	exit 0
