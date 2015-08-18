@@ -177,10 +177,15 @@ get_msg(){
 	# handling multiple events within a second problem
 	CNT=`jshon -e pushes <<< "$RAWMSG"|grep \"created\"|wc -l`
 	for(( ENTRY=0 ; ENTRY < $CNT ; ENTRY++ ));do
+		# check if push is "active" and "not dismissed"
+		# will disable dismissed checking (controled by $2 parameter) if it is retriving
+		# pushes from the past, and enable checking if it is retriving new pushes
 		if [ `j_push $ENTRY -e active` == "true" ];then
-			TIME=`j_push $ENTRY -e created`
-			if [ ! -f ~/.bashbullet/received/${TIME}* ];then
-				disp_save
+			if [[ "$2" == 'dont_care' || `j_push $ENTRY -e dismissed` == 'false' ]];then
+				TIME=`j_push $ENTRY -e created`
+				if [ ! -f ~/.bashbullet/received/${TIME}* ];then
+					disp_save
+				fi
 			fi
 		fi
 	done
@@ -191,7 +196,7 @@ tickle_detect(){
 	while true ; do
 	    if read line; then
 		if grep tickle <<< $line >/dev/null 2>/dev/null;then
-			get_msg `date --date="-15sec" +%s`
+			get_msg `date --date="-15sec" +%s` check_dismissed
 			echo icon:mail-unread > $PIPE
 			date +%s > ~/.bashbullet/.last_timestamp
 		fi
@@ -207,7 +212,7 @@ if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
 	echo icon:mail-unread > $PIPE
 fi
 
-get_msg $LASTTIME
+get_msg $LASTTIME dont_care
 date +%s > ~/.bashbullet/.last_timestamp
 
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
