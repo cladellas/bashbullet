@@ -5,6 +5,9 @@
 # Description	: notifications are displayed through notify-osd.
 # 		  received pushes would be saved at ~/.pushbullet/received with timestamp and type of push as filename
 
+export DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+[[ ! -z "$1" && "$1" == '-scr' ]] && screen -S bashbullet-session -dm $DIR/bashbullet && exit
+
 if ! ps -o stat= -p $$ |grep + >/dev/null;then
 notify-send Warning "Bashbullet is running in the background
 Make sure to start it by screen/systemd/upstart or it will not work
@@ -80,12 +83,14 @@ on_click() {
 	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` == 0 ];then
 		echo "No new messages" > ${HOME}/.bashbullet/.disp_tmp
 	else
-		tac ${HOME}/.bashbullet/received/*_* |tac > ${HOME}/.bashbullet/.disp_tmp
+		( tac ${HOME}/.bashbullet/received/*_*|sed -e 's/^  / _-|/g' -e 's/^FROM/  --- From/g'|\
+		tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|tac > ${HOME}/.bashbullet/.disp_tmp
 	fi
 	if [ `find ${HOME}/.bashbullet/received/archived/* 2>/dev/null|wc -l` == 0 ];then
 		echo "No archived messages" > ${HOME}/.bashbullet/.arch_tmp
 	else
-		tac ${HOME}/.bashbullet/received/archived/*|tac > ${HOME}/.bashbullet/.arch_tmp
+		( tac ${HOME}/.bashbullet/received/archived/*|sed -e 's/^  / _-|/g' -e 's/^FROM/  --- From/g'|\
+                tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|tac > ${HOME}/.bashbullet/.arch_tmp
 	fi
 
 	yad --plug=$YADKEY --tabnum=1 --text-info --filename=${HOME}/.bashbullet/.disp_tmp &
@@ -106,8 +111,6 @@ on_click() {
 	esac
 }
 export -f on_click
-
-export DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 # create the notification icon
 
@@ -155,11 +158,13 @@ disp_save(){
 		else
 			FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
 		fi
-		MSG=`j_push $ENTRY | egrep 'title|body|file_url|\"url'|cut -d \" -f4`
+		MSG=`j_push $ENTRY | egrep 'title|body'|cut -d \" -f4`
+		URL=`j_push $ENTRY | egrep '_url|\"url'|cut -d \" -f4`
+		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 
 		killall notify-osd 2>/dev/null
-		notify-send "${TYPE} : from ${FROM} to ${TO}" "$MSG"
-		( eval echo "FROM $FROM TO $TO";echo  \\ \\ $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
+		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
+		( eval echo "FROM $FROM TO $TO";echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 	fi
 }
 
