@@ -3,9 +3,14 @@
 ## your pushbullet api key
 API_KEY=''
 
+
 ## target devices filter
 ## will only display pushes sent to designated device if this variable is set
 # target_filter='DEVICE NAME'
+
+## uncomment below to customize notification command
+# custom_command='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
+
 
 ## url shortener [ require surl python command ]
 ## can be replaced by any url shortener command that reads from stdin and output to stdout

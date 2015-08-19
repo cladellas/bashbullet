@@ -165,7 +165,11 @@ disp_save(){
 		fi
 
 		killall notify-osd 2>/dev/null
-		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
+		if [ ! -z "$custom_command" ];then
+			eval $custom_command
+		else
+			notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
+		fi
 		( eval echo "FROM $FROM TO $TO";echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 	fi
 }
@@ -174,7 +178,6 @@ disp_save(){
 get_msg(){
 	RAWMSG=`CL pushes?modified_after=$1`
 
-	# handling multiple events within a second problem
 	CNT=`jshon -e pushes <<< "$RAWMSG"|grep \"created\"|wc -l`
 	for(( ENTRY=0 ; ENTRY < $CNT ; ENTRY++ ));do
 		# check if push is "active" and "not dismissed"
