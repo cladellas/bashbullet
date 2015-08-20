@@ -1,6 +1,6 @@
 Bashbullet  
 ===================================  
- A pushbullet systray notification daemon for linux. A simple client to receive and to send pushes.  
+ A pushbullet systray notification daemon for linux. A simple client to receive push/mirror message and to send pushes.  
    
  Bashbullet is a pushbullet daemon designed to be highly customizable and scriptable.
  Virtually everyone with a basic understanding of bash can easily hack the source.

@@ -159,6 +159,15 @@ decode_name(){
 # extract push from json
 j_push(){ jshon -e pushes -e $@ <<< "$RAWMSG" ;}
 
+mirrored(){
+	RAWLINE=`echo $line|sed -r "s:\x1B\[[0-9;]*[mK]::g"|cut -c 8-`
+	j_mirror(){ jshon -e push -e $@ <<< "$RAWLINE" ;}
+	FROM=$(decode_name `j_mirror source_device_iden |tr -d \"`)
+	TITLE=$(eval echo `j_mirror title`)
+	BODY=$(eval echo `j_mirror body`)
+	notify-send "Mirror $FROM :: $TITLE" "$BODY"
+}
+
 # notify-send and save
 disp_save(){
 	TYPE=`j_push $ENTRY -e type|tr -d \"`
@@ -227,8 +236,12 @@ get_msg(){
 tickle_detect(){
 	while true ; do
 	    if read line; then
-		if grep tickle <<< $line >/dev/null 2>/dev/null;then
-			get_msg `date --date="-15sec" +%s` check_dismissed
+		if grep push <<< $line >/dev/null 2>/dev/null;then
+			if grep mirror <<< $line >/dev/null 2>/dev/null;then
+				mirrored
+			else
+				get_msg `date --date="-15sec" +%s` check_dismissed
+			fi
 			date +%s > ~/.bashbullet/.last_timestamp
 		fi
 	    fi
@@ -246,4 +259,5 @@ fi
 get_msg $LASTTIME dont_care
 date +%s > ~/.bashbullet/.last_timestamp
 
+# wscat | remove color code | extract json
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
