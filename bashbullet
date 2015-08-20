@@ -177,8 +177,9 @@ disp_save(){
 	if eval test -z \"\$custom_command_$j\" ;then
 		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
 		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
+		echo icon:mail-unread > $PIPE
 	else
-		eval eval \$custom_command_$j
+		eval eval \$custom_command_$j &
 	fi
 	( eval echo "FROM $FROM TO $TO";echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 }
@@ -194,7 +195,7 @@ device_filter(){
 
 	# handle receiver device filter (if set in config)
 	if [[  $targets == 0 || "$TO" == all ]];then
-		disp_save
+		j=NAN; disp_save
 	else
 		for((j=0; j<$targets ;j++));do
 			eval test \"$TO\" == \"\${target_filter_$j}\" && disp_save
@@ -228,7 +229,6 @@ tickle_detect(){
 	    if read line; then
 		if grep tickle <<< $line >/dev/null 2>/dev/null;then
 			get_msg `date --date="-15sec" +%s` check_dismissed
-			echo icon:mail-unread > $PIPE
 			date +%s > ~/.bashbullet/.last_timestamp
 		fi
 	    fi
