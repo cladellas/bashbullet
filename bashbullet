@@ -29,9 +29,9 @@ if [ -f ~/.bashbullet/config ];then
 		let targets++
 	done
 	if [ -f /usr/share/bashbullet/pushbullet.svg ];then
-		SRC='/usr/share/bashbullet'
+		export SRC='/usr/share/bashbullet'
 	else
-		SRC="$DIR"
+		export SRC="$DIR"
 	fi
 else
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
