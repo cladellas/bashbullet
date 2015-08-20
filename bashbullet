@@ -28,9 +28,14 @@ if [ -f ~/.bashbullet/config ];then
 		eval test -z \"\${target_filter_$targets}\" && break
 		let targets++
 	done
+	if [ -f /usr/share/bashbullet/pushbullet.svg ];then
+		SRC='/usr/share/bashbullet'
+	else
+		SRC="$DIR"
+	fi
 else
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
-	echo see /usr/share/doc/bashbullet/config_example for configuration guide
+	echo see /usr/share/bashbullet/config_example for configuration guide
 	exit 0
 fi
 
@@ -111,14 +116,14 @@ on_click() {
 	yad --plug=$YADKEY --tabnum=2 --text-info --filename=${HOME}/.bashbullet/.arch_tmp &
 
 	yad --mouse --notebook --key=$YADKEY --width=600 --height=400 --title "Bashbullet Inbox" \
-		--window-icon="${DIR}/pushbullet.svg" --tab="New Messages" --tab="Archived Messages" --title "Bashbullet Inbox" \
+		--window-icon="${SRC}/pushbullet.svg" --tab="New Messages" --tab="Archived Messages" --title "Bashbullet Inbox" \
 		--button "Close:1" --button "Mark all as read:2" --button "Archive all:3" --button "New push:4"
 	case  $? in
 		2)
-		echo icon:"${DIR}/pushbullet.svg" > ${PIPE} ;;
+		echo icon:"${SRC}/pushbullet.svg" > ${PIPE} ;;
 		3)
 		mv ${HOME}/.bashbullet/received/*_* ${HOME}/.bashbullet/received/archived/
-		echo icon:"${DIR}/pushbullet.svg" > ${PIPE} ;;
+		echo icon:"${SRC}/pushbullet.svg" > ${PIPE} ;;
 		4)
 		new_push
 		;;
@@ -130,7 +135,7 @@ export -f on_click
 yad --notification                  \
     --title bashbullet \
     --listen                        \
-    --image="$DIR/pushbullet.svg"              \
+    --image="$SRC/pushbullet.svg"              \
     --text="click to display new message"   \
     --command="bash -c \"on_click\"" <&3 &
 
@@ -170,6 +175,7 @@ disp_save(){
 	killall notify-osd 2>/dev/null
 
 	if eval test -z \"\$custom_command_$j\" ;then
+		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
 		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
 	else
 		eval eval \$custom_command_$j

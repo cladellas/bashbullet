@@ -4,6 +4,10 @@
 API_KEY=''
 
 
+## uncomment to load urls in browser automatically.
+# xdg-open=1
+
+
 ## target devices filter [ optional ]
 ## Bashbullet will only display pushes sent to these devices if variables below are set
 ## Set devices as many as you like !

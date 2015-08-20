@@ -16,17 +16,18 @@ Bashbullet
 
 ### Prerequisite  
  node.js  
- wscat  
+ ws (wscat)  
  jshon  
  notify-osd  
  yad  
  surl [optional: url shortener]
 
 ### Installation  
- Excute this script directly. There is no need to install.  
-  
- git clone https://github.com/Boteium/bashbullet.git  
- cd bashbullet && ./bashbullet  
+ Arch Linux : from AUR  
+   
+ Or excute this script directly without installtion.  
+  git clone https://github.com/Boteium/bashbullet.git  
+  cd bashbullet && ./bashbullet  
 
 ### Minimal configuration  
  Place your api key in ~/.bashbullet/config  
