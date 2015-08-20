@@ -4,18 +4,22 @@
 API_KEY=''
 
 
-## target devices filter
-## will only display pushes sent to designated device if this variable is set
-# target_filter='DEVICE NAME'
+## target devices filter [ optional ]
+## Bashbullet will only display pushes sent to these devices if variables below are set
+## Set devices as many as you like !
+# target_filter_0='DEVICE NAME 0'
+# target_filter_1='DEVICE NAME 1'
+# target_filter_2='DEVICE NAME 2'
 
-## uncomment below to customize notification command
-# custom_command='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
+## uncomment these variables to customize notification commands for corresponding devices [ optional ]
+# custom_command_0='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
+# custom_command_1='xdg-open "${URL}"'
 
 
-## url shortener [ require surl python command ]
+## url shortener [ optional :: require surl python command ]
 ## can be replaced by any url shortener command that reads from stdin and output to stdout
-## Warning :: url shortener might cause potential exposure of link. consider before use
+## Warning :: url shortener might cause potential exposure of link. think twice before use
 # SHORT_URL='surl -s is.gd'
 
-## file link would not be shorten by default. [ due to privacy concern]
+## file link would not be shorten by default due to privacy concern
 allow_file_shorten='false'

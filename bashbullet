@@ -23,8 +23,14 @@ if [ -f ~/.bashbullet/config ];then
 	[ ! -f ~/.bashbullet/.last_timestamp ] && date +%s > ~/.bashbullet/.last_timestamp
 	LASTTIME=`cat ~/.bashbullet/.last_timestamp`
 	[ -z $allow_file_shorten ] && allow_file_shorten=false
+	targets=0
+	while(( 1 ));do
+		eval test -z \"\${target_filter_$targets}\" && break
+		let targets++
+	done
 else
 	echo please put your API_KEY=\"your_key\" in ~/.bashbullet/config
+	echo see /usr/share/doc/bashbullet/config_example for configuration guide
 	exit 0
 fi
 
@@ -42,6 +48,7 @@ on_exit() {
 }
 trap on_exit EXIT
 
+# simple client for sending pushes to phone
 new_push(){
 	IFS='
 '
@@ -64,22 +71,28 @@ new_push(){
                         fi
                 done
         }
+	# generate yad readable list
         DEVICES=`for i in ${DEVS[@]};do echo -n \;$i;done|cut -c 2-`
 
         IFS='|'
-        NOTE=(`yad --mouse --form --height=300 \
+	# generate yad dialogue
+        NOTE=(`yad --mouse --form --height=300 --title "Bashbullet :: new push" \
               --field="Device":CB "${DEVICES}" \
               --field="Title" "" --field="Note":TXT "" --item-separator=';' \
               --button="Discard:1" --button="Push it:2"`)
+	# push to phone
         if [ $? == 2 ];then
                 [ -z ${NOTE[1]} ] && NOTE[1]="untitled"
                 PU `decode_identity "${NOTE[0]}"`  note "${NOTE[1]}" "${NOTE[2]}"
         fi
 }
 export -f new_push
+
 # add handler for tray icon left click
 on_click() {
 	YADKEY=${RANDOM}
+
+	# aggregate all messages and sort by received time
 	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` == 0 ];then
 		echo "No new messages" > ${HOME}/.bashbullet/.disp_tmp
 	else
@@ -93,6 +106,7 @@ on_click() {
                 tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|tac > ${HOME}/.bashbullet/.arch_tmp
 	fi
 
+	# generate yad tab
 	yad --plug=$YADKEY --tabnum=1 --text-info --filename=${HOME}/.bashbullet/.disp_tmp &
 	yad --plug=$YADKEY --tabnum=2 --text-info --filename=${HOME}/.bashbullet/.arch_tmp &
 
@@ -112,8 +126,7 @@ on_click() {
 }
 export -f on_click
 
-# create the notification icon
-
+# create yad notification icon
 yad --notification                  \
     --title bashbullet \
     --listen                        \
@@ -143,6 +156,29 @@ j_push(){ jshon -e pushes -e $@ <<< "$RAWMSG" ;}
 
 # notify-send and save
 disp_save(){
+	TYPE=`j_push $ENTRY -e type|tr -d \"`
+	if [ -z `j_push $ENTRY -e source_device_iden` ];then
+		FROM=`j_push $ENTRY -e sender_name |tr -d \"`
+	else
+		FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
+	fi
+	MSG=`j_push $ENTRY | egrep 'title|body'|cut -d \" -f4`
+	URL=`j_push $ENTRY | egrep '_url|\"url'|cut -d \" -f4`
+	if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
+		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
+	fi
+	killall notify-osd 2>/dev/null
+
+	if eval test -z \"\$custom_command_$j\" ;then
+		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
+	else
+		eval eval \$custom_command_$j
+	fi
+	( eval echo "FROM $FROM TO $TO";echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
+}
+
+# handle device filter
+device_filter(){
 	TO=`jshon -e pushes -e $ENTRY -e target_device_iden <<< "$RAWMSG" 2>/dev/null|tr -d \"`
 	if [ -z $TO ];then
 		TO="all"
@@ -151,30 +187,16 @@ disp_save(){
 	fi
 
 	# handle receiver device filter (if set in config)
-	if [[ -z $target_filter ||  "$target_filter" == "$TO" || "$TO" == all ]];then
-		TYPE=`j_push $ENTRY -e type|tr -d \"`
-		if [ -z `j_push $ENTRY -e source_device_iden` ];then
-			FROM=`j_push $ENTRY -e sender_name |tr -d \"`
-		else
-			FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
-		fi
-		MSG=`j_push $ENTRY | egrep 'title|body'|cut -d \" -f4`
-		URL=`j_push $ENTRY | egrep '_url|\"url'|cut -d \" -f4`
-		if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
-			[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
-		fi
-
-		killall notify-osd 2>/dev/null
-		if [ ! -z "$custom_command" ];then
-			eval $custom_command
-		else
-			notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
-		fi
-		( eval echo "FROM $FROM TO $TO";echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
+	if [[  $targets == 0 || "$TO" == all ]];then
+		disp_save
+	else
+		for((j=0; j<$targets ;j++));do
+			eval test \"$TO\" == \"\${target_filter_$j}\" && disp_save
+		done
 	fi
 }
 
-# Get all messages in the past 15 seconds and only display new ones
+# Retrieve pushes after "$1" time
 get_msg(){
 	RAWMSG=`CL pushes?modified_after=$1`
 
@@ -187,7 +209,7 @@ get_msg(){
 			if [[ "$2" == 'dont_care' || `j_push $ENTRY -e dismissed` == 'false' ]];then
 				TIME=`j_push $ENTRY -e created`
 				if [ ! -f ~/.bashbullet/received/${TIME}* ];then
-					disp_save
+					device_filter
 				fi
 			fi
 		fi

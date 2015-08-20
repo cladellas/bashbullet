@@ -1,12 +1,18 @@
 Bashbullet  
 ===================================  
- a simple X11 pushbullet systray notification daemon for linux desktop written in bash  
+ A pushbullet systray notification daemon for linux. A simple client to receive and to send pushes.  
    
- bashbullet would only display received message after first run.
- to retrieve older pushes feel free to hack ~/.bashbullet/.last_timestamp  
- setting up a new browser client for message management but disable
+ Bashbullet is a pushbullet daemon designed to be highly customizable and scriptable.
+ Virtually everyone with a basic understanding of bash can easily hack the source.
+ I decided to start this project because I need a client that can not only receive and send pushes
+ on linux but also trigger custom script on my desktop. Simply put your command 
+ in config file would satiate most needs for scripting.
+   
+ Bashbullet would only display new messages after first run.
+ To retrieve older pushes feel free to hack ~/.bashbullet/.last_timestamp
+ Setting up a new browser client for message management but disable
  browser notification and use bashbullet for notification is recommended.
- see config_example to set up target_filter to only display message sent to a certain device  
+ See config_example to set up target_filter to only display message sent to a certain device  
 
 ### Prerequisite  
  node.js  
@@ -23,7 +29,7 @@ Bashbullet
  cd bashbullet && ./bashbullet  
 
 ### Minimal configuration  
- place your api key in ~/.bashbullet/config  
+ Place your api key in ~/.bashbullet/config  
   API_KEY="my_pushbullet_api_key"  
 
 ### Running in the background
