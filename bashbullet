@@ -160,12 +160,12 @@ decode_name(){
 j_push(){ jshon -e pushes -e $@ <<< "$RAWMSG" ;}
 
 mirrored(){
-	RAWLINE=`echo $line|sed -r "s:\x1B\[[0-9;]*[mK]::g"|cut -c 8-`
-	j_mirror(){ jshon -e push -e $@ <<< "$RAWLINE" ;}
-	FROM=$(decode_name `j_mirror source_device_iden |tr -d \"`)
-	TITLE=$(eval echo `j_mirror title`)
-	BODY=$(eval echo `j_mirror body`)
-	notify-send "Mirror $FROM :: $TITLE" "$BODY"
+	# use sed instead of jshon to parse
+	FROM=$(decode_name `echo $line|sed -e 's/.*source_device_iden":"//g' -e 's/",".*//g'`)
+	TITLE=`echo $line|sed -e 's/.*title":"//g' -e 's/",".*//g'`
+	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g'`
+	APP=`echo $line|sed -e 's/.*application_name":"//g' -e 's/",".*//g'`
+	notify-send "$FROM "$APP" :: $TITLE" "$BODY"
 }
 
 # notify-send and save
@@ -176,12 +176,11 @@ disp_save(){
 	else
 		FROM=$(decode_name `j_push $ENTRY -e source_device_iden |tr -d \"`)
 	fi
-	MSG=`j_push $ENTRY | egrep 'title|body'|cut -d \" -f4`
-	URL=`j_push $ENTRY | egrep '_url|\"url'|cut -d \" -f4`
+	MSG=$(eval echo `j_push $ENTRY | egrep 'title|body'|cut -d : -f2-`)
+	URL=$(eval echo `j_push $ENTRY | egrep '_url|\"url'|cut -d : -f2-`)
 	if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
 		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 	fi
-	killall notify-osd 2>/dev/null
 
 	if eval test -z \"\$custom_command_$j\" ;then
 		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
