@@ -5,7 +5,7 @@ API_KEY=''
 
 
 ## uncomment to load urls in browser automatically.
-# xdg-open=1
+# xdg-open=true
 
 
 ## target devices filter [ optional ]
@@ -19,6 +19,8 @@ API_KEY=''
 # custom_command_0='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
 # custom_command_1='xdg-open "${URL}"'
 
+## uncomment to disable notification and skip inbox for all device with custom command
+# skip_custom=true
 
 ## url shortener [ optional :: require surl python command ]
 ## can be replaced by any url shortener command that reads from stdin and output to stdout

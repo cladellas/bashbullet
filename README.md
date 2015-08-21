@@ -18,7 +18,7 @@ Bashbullet
  node.js  
  ws (wscat)  
  jshon  
- notify-osd  
+ libnotify  
  yad  
  surl [optional: url shortener]
 
