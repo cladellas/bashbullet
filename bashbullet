@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# Bashbullet	: a simple pushbullet notification daemon for linux users written in bash
+# Bashbullet	: a pushbullet systray notification daemon for linux. also a simple client to receive, mirror and send pushes
 # Author	: Boteium - https://github.com/Boteium
-# Description	: notifications are displayed through notify-osd.
-# 		  received pushes would be saved at ~/.pushbullet/received with timestamp and type of push as filename
 
 # running in the background parameter
 export DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -65,7 +63,7 @@ new_push(){
 		if curl -s "https://api.pushbullet.com/v2/pushes" \
                  -u "$API_KEY": -d device_iden="$1" -d type="$2" -d title="$3" \
                  --data-urlencode body="`printf $4`" -X POST |\
-		grep 'active":true' >/dev/null;then notify-send "pushed";fi
+		grep 'active":true' >/dev/null;then notify-send -t 1000 "pushed";fi
 		# use printf to translate \n to newline
         }
         decode_identity(){
@@ -107,8 +105,9 @@ on_click() {
 	if [ `find ${HOME}/.bashbullet/received/archived/* 2>/dev/null|wc -l` == 0 ];then
 		echo "No archived messages" > ${HOME}/.bashbullet/.arch_tmp
 	else
-		( tac ${HOME}/.bashbullet/received/archived/*|sed -e 's/^  / _-|/g' -e 's/^FROM/  --- From/g'|\
-                tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|tac > ${HOME}/.bashbullet/.arch_tmp
+		( tac ${HOME}/.bashbullet/received/archived/*_*|sed -e 's/^  / _-|/g' -e 's/^FROM/  --- From/g'|\
+                tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|sed -e '/^$/d'|tac > ${HOME}/.bashbullet/.arch_tmp
+		tac ${HOME}/.bashbullet/received/archived/OldArchive.txt >> ${HOME}/.bashbullet/.arch_tmp 2>/dev/null
 	fi
 
 	# generate yad tab
@@ -122,6 +121,8 @@ on_click() {
 		2)
 		echo icon:"${SRC}/pushbullet.svg" > ${PIPE} ;;
 		3)
+		rm ${HOME}/.bashbullet/received/archived/*_* 2>/dev/null
+		tac ${HOME}/.bashbullet/.arch_tmp  > ${HOME}/.bashbullet/received/archived/OldArchive.txt
 		mv ${HOME}/.bashbullet/received/*_* ${HOME}/.bashbullet/received/archived/
 		echo icon:"${SRC}/pushbullet.svg" > ${PIPE} ;;
 		4)
@@ -166,10 +167,10 @@ mirrored(){
 	TITLE=`echo $line|sed -e 's/.*title":"//g' -e 's/",".*//g'`
 	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g'`
 	APP=`echo $line|sed -e 's/.*application_name":"//g' -e 's/",".*//g'`
-	notify-send "$FROM "$APP" :: $TITLE" "$BODY"
+	notify-send -t 5000 "$FROM "$APP" :: $TITLE" "$BODY"
 }
 save(){
-	( eval echo "FROM $FROM TO $TO"
+	( eval echo "$FROM \>\> $TO"
 	  echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
 }
 
@@ -191,7 +192,7 @@ disp_save(){
 
 	if eval test -z \"\$custom_command_$j\" ;then
 		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
-		notify-send "${TYPE} : from ${FROM} to ${TO}" "$URL $MSG"
+		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
 		save
 	else
 		if [ -z $skip_custom  ] ;then
