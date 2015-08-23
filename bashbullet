@@ -168,10 +168,13 @@ mirrored(){
 	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g'`
 	APP=`echo $line|sed -e 's/.*application_name":"//g' -e 's/",".*//g'`
 	notify-send -t 5000 "$FROM "$APP" :: $TITLE" "$BODY"
+	[ ! -z DING_MIRROR ] && eval $DING_MIRROR
 }
 save(){
-	( eval echo "$FROM \>\> $TO"
+	( eval echo "\ $FROM \>\> $TO"
 	  echo  \ \ ${TYPE}:: $URL $MSG ) > ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_${TYPE}
+	echo icon:mail-unread > $PIPE
+	[ ! -z $DING ] && eval $DING
 }
 
 # notify-send and save
@@ -187,8 +190,6 @@ disp_save(){
 	if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
 		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 	fi
-
-	[ -z $skip_custom ] && echo icon:mail-unread > $PIPE
 
 	if eval test -z \"\$custom_command_$j\" ;then
 		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"

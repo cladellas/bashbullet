@@ -20,6 +20,7 @@ API_KEY=''
 # custom_command_1='xdg-open "${URL}"'
 
 ## uncomment to disable notification and skip inbox for all device with custom command
+## would also disable notification sound for custom command as well
 # skip_custom=true
 
 ## url shortener [ optional :: require surl python command ]
@@ -29,3 +30,8 @@ API_KEY=''
 
 ## file link would not be shorten by default due to privacy concern
 allow_file_shorten='false'
+
+## uncomment to enable  notification sound for new push and mirrored notification
+## for example : to use mpv and sound-theme-freedesktop
+# DING='mpv /usr/share/sounds/freedesktop/stereo/bell.oga'
+# DING_MIRROR='mpv /usr/share/sounds/freedesktop/stereo/message.oga'
