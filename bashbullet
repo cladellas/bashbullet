@@ -14,6 +14,13 @@ Make sure to start it by screen/systemd/upstart or it will not work
 e.g. screen -S bashbullet-session -dm ./bashbullet"
 fi
 
+# check dependencies
+for i in yad wscat jshon notify-send;do
+	if ! [ `whereis -b $i|cut -d ':' -f2` ];then
+		echo command $i not found, please install it and try again && exit 0
+	fi
+done
+
 # Read Configration file
 [ ! -x ~/.bashbullet/received/archived ] && mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
@@ -167,8 +174,12 @@ mirrored(){
 	TITLE=`echo $line|sed -e 's/.*title":"//g' -e 's/",".*//g'`
 	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g'`
 	APP=`echo $line|sed -e 's/.*application_name":"//g' -e 's/",".*//g'`
-	notify-send -t 5000 "$FROM "$APP" :: $TITLE" "$BODY"
-	[ ! -z DING_MIRROR ] && eval $DING_MIRROR
+	ICO=`echo  $line|sed -e 's/.*icon":"//g' -e 's/"}}.*//g'`
+	ICON=`mktemp -u --tmpdir ${0##*/}.ico.XXXXXXXX`
+	echo -e $ICO |tr -d '\n' |tr -d '\' 2>/dev/null|base64 -d > $ICON
+	notify-send -t 5000 -i $ICON "$FROM $APP :: $TITLE" "`printf "$BODY"`"
+	[ ! -z DING_MIRROR ] && eval $DING_MIRROR &
+	rm $ICON
 }
 save(){
 	( eval echo "\ $FROM \>\> $TO"
@@ -247,7 +258,7 @@ get_msg(){
 ## Monitoring websocket for push event
 tickle_detect(){
 	while true ; do
-	    if read line; then
+	    if read -r line; then
 		if grep push <<< $line >/dev/null 2>/dev/null;then
 			if grep mirror <<< $line >/dev/null 2>/dev/null;then
 				mirrored
