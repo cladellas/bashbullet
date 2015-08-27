@@ -35,3 +35,10 @@ allow_file_shorten='false'
 ## for example : to use mpv and sound-theme-freedesktop
 # DING='mpv /usr/share/sounds/freedesktop/stereo/bell.oga'
 # DING_MIRROR='mpv /usr/share/sounds/freedesktop/stereo/message.oga'
+
+
+## uncomment to convert icon format and size
+## ( some notification daemon only support png )
+# ICONFORMAT=".png"
+# ICONSIZE="-resize 32x32"
+

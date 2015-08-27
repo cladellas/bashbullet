@@ -103,18 +103,18 @@ on_click() {
 	YADKEY=${RANDOM}
 
 	# aggregate all messages and sort by received time
-	if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` == 0 ];then
-		echo "No new messages" > ${HOME}/.bashbullet/.disp_tmp
-	else
+	if [ "`ls ${HOME}/.bashbullet/received/*_* 2>/dev/null`" ];then
 		( tac ${HOME}/.bashbullet/received/*_*|sed -e 's/^  / _-|/g' -e 's/^FROM/  --- From/g'|\
 		tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|tac > ${HOME}/.bashbullet/.disp_tmp
-	fi
-	if [ `find ${HOME}/.bashbullet/received/archived/* 2>/dev/null|wc -l` == 0 ];then
-		echo "No archived messages" > ${HOME}/.bashbullet/.arch_tmp
 	else
+		echo "No new messages" > ${HOME}/.bashbullet/.disp_tmp
+	fi
+	if [ "`ls ${HOME}/.bashbullet/received/archived/`" ];then
 		( tac ${HOME}/.bashbullet/received/archived/*_*|sed -e 's/^  / _-|/g' -e 's/^FROM/  --- From/g'|\
                 tr -d '\n'|sed 's/ _-|/\n/g' ;printf '\n')|sed -e '/^$/d'|tac > ${HOME}/.bashbullet/.arch_tmp
 		tac ${HOME}/.bashbullet/received/archived/OldArchive.txt >> ${HOME}/.bashbullet/.arch_tmp 2>/dev/null
+	else
+		echo "No archived messages" > ${HOME}/.bashbullet/.arch_tmp
 	fi
 
 	# generate yad tab
@@ -136,16 +136,14 @@ on_click() {
 		new_push
 		;;
 	esac
-	find ~/.bashbullet/received/*dismissed* -type f -cmin +5 -delete
+	find ~/.bashbullet/received/*dismissed* -type f -cmin +5 -delete 2>/dev/null &
 }
 export -f on_click
 
 # create yad notification icon
-yad --notification                  \
-    --title bashbullet \
-    --listen                        \
-    --image="$SRC/pushbullet.svg"              \
-    --text="click to display new message"   \
+yad --notification --title bashbullet --listen \
+    --image="$SRC/pushbullet.svg" \
+    --text="click to display new message" \
     --command="bash -c \"on_click\"" <&3 &
 
 IFS='
@@ -177,9 +175,12 @@ mirrored(){
 	ICO=`echo  $line|sed -e 's/.*icon":"//g' -e 's/"}}.*//g'`
 	ICON=`mktemp -u --tmpdir ${0##*/}.ico.XXXXXXXX`
 	echo -e $ICO |tr -d '\n' |tr -d '\' 2>/dev/null|base64 -d > $ICON
-	notify-send -t 5000 -i $ICON "$FROM $APP :: $TITLE" "`printf "$BODY"`"
+ 	if [ ! -z $ICONFORMAT ];then
+ 		eval convert "$ICON" $ICONSIZE "$ICON${ICONFORMAT}"
+ 	fi
+ 	notify-send -t 5000 -i ${ICON}${ICONFORMAT} "$FROM $APP :: $TITLE" "`printf "$BODY"`"
 	[ ! -z DING_MIRROR ] && eval $DING_MIRROR &
-	rm $ICON
+        rm $ICON
 }
 save(){
 	( eval echo "\ $FROM \>\> $TO"
@@ -275,7 +276,7 @@ DEVS_RAW=`CL devices`
 DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
 IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
 
-if [ `find ${HOME}/.bashbullet/received/*_* 2>/dev/null|wc -l` != 0 ];then
+if [ "`ls ${HOME}/.bashbullet/received/*_* 2>/dev/null`" ];then
 	echo icon:mail-unread > $PIPE
 fi
 
