@@ -21,6 +21,7 @@ API_KEY=''
 
 ## uncomment to disable notification and skip inbox for corresponding device
 ## would also disable notification sound as well
+# skip_0=true
 # skip_1=true
 
 ## url shortener [ optional :: require surl python command ]

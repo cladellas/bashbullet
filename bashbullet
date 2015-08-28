@@ -206,15 +206,14 @@ disp_save(){
 	if eval test -z \"\$custom_command_$j\" ;then
 		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
 		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
-		save
 	else
+		eval eval \$custom_command_$j &
+	fi
 
 	if eval test -z \"\${skip_$j}\" ;then
-			save
-		else
-			touch ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_dismissed
-		fi
-		eval eval \$custom_command_$j &
+		save
+	else
+		touch ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_dismissed
 	fi
 }
 
