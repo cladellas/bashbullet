@@ -180,7 +180,7 @@ mirrored(){
  	fi
  	notify-send -t 5000 -i ${ICON}${ICONFORMAT} "$FROM $APP :: $TITLE" "`printf "$BODY"`"
 	[ ! -z DING_MIRROR ] && eval $DING_MIRROR &
-        rm $ICON
+        rm ${ICON}*
 }
 save(){
 	( eval echo "\ $FROM \>\> $TO"
@@ -208,7 +208,8 @@ disp_save(){
 		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
 		save
 	else
-		if [ -z $skip_custom  ] ;then
+
+	if eval test -z \"\${skip_$j}\" ;the
 			save
 		else
 			touch ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_dismissed

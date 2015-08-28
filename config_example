@@ -19,9 +19,9 @@ API_KEY=''
 # custom_command_0='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
 # custom_command_1='xdg-open "${URL}"'
 
-## uncomment to disable notification and skip inbox for all device with custom command
-## would also disable notification sound for custom command as well
-# skip_custom=true
+## uncomment to disable notification and skip inbox for corresponding device
+## would also disable notification sound as well
+# skip_1=true
 
 ## url shortener [ optional :: require surl python command ]
 ## can be replaced by any url shortener command that reads from stdin and output to stdout
