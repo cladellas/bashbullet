@@ -199,17 +199,18 @@ disp_save(){
 	fi
 	MSG=$(eval echo `j_push $ENTRY | egrep 'title|body'|cut -d : -f2-`)
 	URL=$(eval echo `j_push $ENTRY | egrep '_url|\"url'|cut -d : -f2-`)
+	if [[ ! -z $cp_link && ! -z "$URL" ]];then
+		eval echo "$URL"|xclip -sel clip
+	fi
 	if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
 		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 	fi
-
 	if eval test -z \"\$custom_command_$j\" ;then
 		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
 		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
 	else
 		eval eval \$custom_command_$j &
 	fi
-
 	if eval test -z \"\${skip_$j}\" ;then
 		save
 	else

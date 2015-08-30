@@ -43,3 +43,5 @@ allow_file_shorten='false'
 # ICONFORMAT=".png"
 # ICONSIZE="-resize 32x32"
 
+## uncomment to automatically copy links to clipboard [ require xclip command ]
+# cp_link=true
