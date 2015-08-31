@@ -45,6 +45,11 @@ else
 	exit 0
 fi
 
+# nodejs path
+if [[ ! -z $my_key && -z $NODE_PATH ]];then
+	export NODE_PATH=$(npm root -g)
+fi
+
 # initialize yad systray icon
 export PIPE=`mktemp -u --tmpdir ${0##*/}.XXXXXXXX`
 mkfifo $PIPE
