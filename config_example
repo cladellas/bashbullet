@@ -1,7 +1,7 @@
 ## sample configuration file for ~/.bashbullet/config 
 
 ############  USER INFORMATION
-## your pushbullet api key
+## pushbullet api key
 API_KEY=''
 
 ## oauth access token can be used instead of api key.
@@ -14,7 +14,7 @@ API_KEY=''
 ############  PER DEVICE SETTINGS
 ## target device filter [ optional ]
 ## Bashbullet would display all pushes if no target device filter is set
-## uncomment to only display pushes sent to these device
+## uncomment to only display pushes sent to these devices
 # target_filter_0='bashbullet'
 # target_filter_1='Firefox'
 # target_filter_2='DEVICE NAME 2'
@@ -23,8 +23,9 @@ API_KEY=''
 # custom_command_0='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
 # custom_command_1='xdg-open "${URL}"'
 
-## uncomment to disable notification and skip inbox for corresponding device
-## would also disable notification sound as well
+## uncomment to disable notification and skip inbox for corresponding devices
+## thus, only custom_command would be triggered upon receiving pushes
+## this would also disable notification sound as well
 # skip_0=true
 # skip_1=true
 
@@ -34,7 +35,7 @@ API_KEY=''
 # ICONFORMAT=".png"
 # ICONSIZE="-resize 32x32"
 
-## uncomment to customize notification commands for mirrored notification
+## uncomment to customize notification command for mirrored notification
 # mirror_command='notify-send -i "${ICON}${ICONFORMAT}" -a "${APPS}" "${APPS} - ${FROM} :: ${TITLE}" "${URL} ${BODY}"'
 
 ############  GLOBAL VARIABLE

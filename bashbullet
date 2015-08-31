@@ -64,15 +64,16 @@ new_push(){
 	IFS='
 '
 	source ~/.bashbullet/config
-        DEVS_RAW=`curl -s --header "Authorization: Bearer $API_KEY" https://api.pushbullet.com/v2/devices`
+	[ -z $API_KEY ] && API_KEY=$access_token
+        DEVS_RAW=`curl -s -X GET --header "Access-Token: $API_KEY" https://api.pushbullet.com/v2/devices`
         DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
-        IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
+        IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep -A1 'active": true'|grep \"iden\"|cut -d \" -f4`)
         PU(){
-		if curl -s "https://api.pushbullet.com/v2/pushes" \
-                 -u "$API_KEY": -d device_iden="$1" -d type="$2" -d title="$3" \
-                 --data-urlencode body="`printf $4`" -X POST |\
+		_ME=`decode_identity bashbullet`
+		if curl -s --header "Access-Token: $API_KEY" -X POST https://api.pushbullet.com/v2/pushes \
+			--header "Content-Type: application/json" \
+			--data-binary '{"source_device_iden":"'"$_ME"'", "device_iden":"'"$1"'", "type": "'"$2"'", "title": "'"$3"'", "body": "'$4'"}' |\
 		grep 'active":true' >/dev/null;then notify-send -t 1000 "pushed";fi
-		# use printf to translate \n to newline
         }
         decode_identity(){
                 for(( i=0 ; i<${#IDEN[@]} ; i++ ));do
@@ -152,7 +153,7 @@ IFS='
 [ -z $DISPLAY ] && DISPLAY=:0
 
 # Pushbullet api url
-CL(){   curl -s --header "Authorization: Bearer $API_KEY" https://api.pushbullet.com/v2/${1} ;}
+CL(){   curl -s -X GET --header "Access-Token: $API_KEY" https://api.pushbullet.com/v2/${1} ;}
 
 # Convert device id to name
 decode_name(){
@@ -281,13 +282,12 @@ tickle_detect(){
 
 DEVS_RAW=`CL devices`
 DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
-IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
+IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep -A1 'active": true'|grep \"iden\"|cut -d \" -f4`)
 
 # create bashbullet devices
 if ! echo "${DEVS[@]}"|grep bashbullet >/dev/null;then
-	curl --header "Access-Token: $API_KEY" -X POST \
-		https://api.pushbullet.com/v2/devices \
-		-d "nickname=bashbullet" -d type=stream
+	curl --header "Access-Token: $API_KEY" -X POST https://api.pushbullet.com/v2/devices \
+		-d nickname=bashbullet -d type=opera
 fi
 
 if [ "`ls ${HOME}/.bashbullet/received/*_* 2>/dev/null`" ];then

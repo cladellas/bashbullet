@@ -19,7 +19,7 @@ Bashbullet
  jshon  
  libnotify  
  yad  
- surl [optional: url shortener]
+ surl [optional: url shortener]   
  xclip [optional: copy to clipboard]
 
 ### Installation  
