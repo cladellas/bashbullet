@@ -7,9 +7,7 @@ API_KEY=''
 ## oauth access token can be used instead of api key.
 ## please visit this url to generate a token for bashbullet ::
 ## https://www.pushbullet.com/authorize?client_id=0akbQhKH6bVRNi14I7bORCflh3x5K49a&redirect_uri=https://boteium.github.io/bashbullet/authed.html&response_type=token
-## there is no difference between access token and api key.
-## either is fine. you don't need to provide both.
-
+## api_key is preferred. access token would make it inconvient for other devices to push back message.
 
 ############  PER DEVICE SETTINGS
 ## target device filter [ optional ]

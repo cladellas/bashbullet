@@ -30,8 +30,7 @@ Bashbullet
   cd bashbullet && ./bashbullet  
 
 ### Minimal configuration  
- Place your api key or oauth access token in ~/.bashbullet/config  
- See config_example for more detail.   
+ Place your api key token in ~/.bashbullet/config  
   API_KEY="my_pushbullet_api_key"  
 
 ### Running in the background

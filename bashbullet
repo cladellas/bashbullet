@@ -61,13 +61,12 @@ trap on_exit EXIT
 
 # simple client for sending pushes to phone
 new_push(){
-	IFS='
-'
+	IFS=$'\n'
 	source ~/.bashbullet/config
 	[ -z $API_KEY ] && API_KEY=$access_token
-        DEVS_RAW=`curl -s -X GET --header "Access-Token: $API_KEY" https://api.pushbullet.com/v2/devices`
-        DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
-        IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep -A1 'active": true'|grep \"iden\"|cut -d \" -f4`)
+	DEVS_RAW=`cat ~/.bashbullet/.devcache`
+	DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
+	IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep -A1 'active": true'|grep \"iden\"|cut -d \" -f4`)
         PU(){
 		_ME=`decode_identity bashbullet`
 		if curl -s --header "Access-Token: $API_KEY" -X POST https://api.pushbullet.com/v2/pushes \
@@ -148,8 +147,7 @@ yad --notification --title bashbullet --listen \
     --text="click to display new message" \
     --command="bash -c \"on_click\"" <&3 &
 
-IFS='
-'
+IFS=$'\n'
 [ -z $DISPLAY ] && DISPLAY=:0
 
 # Pushbullet api url
@@ -281,8 +279,11 @@ tickle_detect(){
 }
 
 DEVS_RAW=`CL devices`
+echo $DEVS_RAW > ~/.bashbullet/.devcache
+
 DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
 IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep -A1 'active": true'|grep \"iden\"|cut -d \" -f4`)
+
 
 # create bashbullet devices
 if ! echo "${DEVS[@]}"|grep bashbullet >/dev/null;then
