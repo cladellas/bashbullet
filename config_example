@@ -36,6 +36,14 @@ API_KEY=''
 ## uncomment to customize notification command for mirrored notification
 # mirror_command='notify-send -i "${ICON}${ICONFORMAT}" -a "${APPS}" "${APPS} - ${FROM} :: ${TITLE}" "${URL} ${BODY}"'
 
+## if end-to-end encryption is turned on. please enter your decryption key (NOT PASSWORD)
+## to generate decryption key, use the following keygen.js command. [ require nodejs modules :: atob node-forge btoa ]
+##   NODE_PATH=$(npm root -g) ./keygen.js $your_password $your_identity
+## keygen.js is either located in the bashbullet folder or in /usr/share/bashbullet/
+## if you don't know your identity. use the following command to retrieve it :
+##   source ~/.bashbullet/config; curl -s -X GET --header "Access-Token: $API_KEY" https://api.pushbullet.com/v2/users/me|jshon -e iden
+#my_key=''
+
 ############  GLOBAL VARIABLE
 ## uncomment to load urls in browser automatically.
 # xdg-open=true

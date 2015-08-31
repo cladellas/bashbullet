@@ -267,7 +267,17 @@ tickle_detect(){
 	while true ; do
 	    if read -r line; then
 		if grep push <<< $line >/dev/null 2>/dev/null;then
-			if grep mirror <<< $line >/dev/null 2>/dev/null;then
+			if grep encrypted <<< $line >/dev/null 2>/dev/null;then
+				if [ -z $my_key ];then
+					notify-send "Bashbullet Warning" "Mirror notification is encrypted, please put your key in ~/.bashbullet/config or it won't work"
+				else
+					line=$(printf `sed -e 's/.*ciphertext":"//' -e 's/"}}.*//g' <<< $line`|tr -d '\'|tr -d '\n')
+					line=`$SRC/dec.js $my_key "$line"`
+					if ! echo "$line" |grep '"type":"dismissal"' > /dev/null;then
+						mirrored
+					fi
+				fi
+			elif grep mirror <<< $line >/dev/null 2>/dev/null;then
 				mirrored
 			else
 				get_msg `date --date="-15sec" +%s` check_dismissed

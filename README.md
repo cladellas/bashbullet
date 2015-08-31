@@ -20,7 +20,10 @@ Bashbullet
  libnotify  
  yad  
  surl [optional: url shortener]   
- xclip [optional: copy to clipboard]
+ xclip [optional: copy to clipboard]   
+ atob [optional: nodejs module for encryption support]   
+ btoa [optional: nodejs module for encryption support]   
+ node-forge [optional: nodejs module for encryption support]   
 
 ### Installation  
  Arch Linux : from AUR  
