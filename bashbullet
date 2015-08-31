@@ -25,6 +25,7 @@ done
 [ ! -x ~/.bashbullet/received/archived ] && mkdir -p ~/.bashbullet/received/archived
 if [ -f ~/.bashbullet/config ];then
 	source ~/.bashbullet/config
+	[ -z $API_KEY ] && API_KEY=$access_token
 	[ ! -f ~/.bashbullet/.last_timestamp ] && date +%s > ~/.bashbullet/.last_timestamp
 	LASTTIME=`cat ~/.bashbullet/.last_timestamp`
 	[ -z $allow_file_shorten ] && allow_file_shorten=false
@@ -178,7 +179,12 @@ mirrored(){
  	if [ ! -z $ICONFORMAT ];then
  		eval convert "$ICON" $ICONSIZE "$ICON${ICONFORMAT}"
  	fi
- 	notify-send -t 5000 -i ${ICON}${ICONFORMAT} "$FROM $APP :: $TITLE" "`printf "$BODY"`"
+ 	if [ ! -z "$mirror_command" ];then
+		eval "$mirror_command"
+	else
+		# use printf to display special character (e.g. \n). use sed to prevent 'printf *' being interpreted as 'ls'
+	 	notify-send -t 5000 -a "$APP" -i ${ICON}${ICONFORMAT} "$APP $FROM :: $TITLE" "$(printf "`sed 's/\*/\\\*/g' <<< "$BODY"`")"
+	fi
 	[ ! -z DING_MIRROR ] && eval $DING_MIRROR &
         rm ${ICON}*
 }
@@ -276,6 +282,13 @@ tickle_detect(){
 DEVS_RAW=`CL devices`
 DEVS=(`jshon -e devices <<< "$DEVS_RAW"|grep \"nickname\"|cut -d \" -f4`)
 IDEN=(`jshon -e devices <<< "$DEVS_RAW"|grep \"iden\"|cut -d \" -f4`)
+
+# create bashbullet devices
+if ! echo "${DEVS[@]}"|grep bashbullet >/dev/null;then
+	curl --header "Access-Token: $API_KEY" -X POST \
+		https://api.pushbullet.com/v2/devices \
+		-d "nickname=bashbullet" -d type=stream
+fi
 
 if [ "`ls ${HOME}/.bashbullet/received/*_* 2>/dev/null`" ];then
 	echo icon:mail-unread > $PIPE

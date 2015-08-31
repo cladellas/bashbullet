@@ -1,6 +1,6 @@
 Bashbullet  
 ===================================  
- A pushbullet systray notification daemon for linux. A simple client to receive push/mirror message and to send pushes.  
+ A pushbullet systray notification daemon for linux. A simple client to receive, mirror and send pushes.  
    
  Bashbullet is a pushbullet daemon designed to be highly customizable and scriptable.
  Virtually everyone with a basic understanding of bash can easily hack the source.
@@ -10,9 +10,8 @@ Bashbullet
    
  Bashbullet would only display new messages after first run.
  To retrieve older pushes feel free to hack ~/.bashbullet/.last_timestamp
- Setting up a new browser client for message management but disable
- browser notification and use bashbullet for notification is recommended.
- See config_example to set up target_filter to only display message sent to a certain device  
+ Bashbullet will display ALL pushes across every device associated with the user.
+ See config_example to set up target_filter to only display message sent to selected devices  
 
 ### Prerequisite  
  node.js  
@@ -21,6 +20,7 @@ Bashbullet
  libnotify  
  yad  
  surl [optional: url shortener]
+ xclip [optional: copy to clipboard]
 
 ### Installation  
  Arch Linux : from AUR  
@@ -30,7 +30,8 @@ Bashbullet
   cd bashbullet && ./bashbullet  
 
 ### Minimal configuration  
- Place your api key in ~/.bashbullet/config  
+ Place your api key or oauth access token in ~/.bashbullet/config  
+ See config_example for more detail.   
   API_KEY="my_pushbullet_api_key"  
 
 ### Running in the background

@@ -1,21 +1,25 @@
 ## sample configuration file for ~/.bashbullet/config 
 
+############  USER INFORMATION
 ## your pushbullet api key
 API_KEY=''
 
+## oauth access token can be used instead of api key.
+## please visit this url to generate a token for bashbullet ::
+## https://www.pushbullet.com/authorize?client_id=0akbQhKH6bVRNi14I7bORCflh3x5K49a&redirect_uri=https://boteium.github.io/bashbullet/authed.html&response_type=token
+## there is no difference between access token and api key.
+## either is fine. you don't need to provide both.
 
-## uncomment to load urls in browser automatically.
-# xdg-open=true
 
-
-## target devices filter [ optional ]
-## Bashbullet will only display pushes sent to these devices if variables below are set
-## Set devices as many as you like !
-# target_filter_0='DEVICE NAME 0'
-# target_filter_1='DEVICE NAME 1'
+############  PER DEVICE SETTINGS
+## target device filter [ optional ]
+## Bashbullet would display all pushes if no target device filter is set
+## uncomment to only display pushes sent to these device
+# target_filter_0='bashbullet'
+# target_filter_1='Firefox'
 # target_filter_2='DEVICE NAME 2'
 
-## uncomment these variables to customize notification commands for corresponding devices [ optional ]
+## uncomment to customize notification commands for corresponding devices [ optional ]
 # custom_command_0='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
 # custom_command_1='xdg-open "${URL}"'
 
@@ -23,6 +27,19 @@ API_KEY=''
 ## would also disable notification sound as well
 # skip_0=true
 # skip_1=true
+
+############  MIRROR NOTIFICATION SETTINGS
+## uncomment to convert icon format and size
+## ( some notification daemon only support png )
+# ICONFORMAT=".png"
+# ICONSIZE="-resize 32x32"
+
+## uncomment to customize notification commands for mirrored notification
+# mirror_command='notify-send -i "${ICON}${ICONFORMAT}" -a "${APPS}" "${APPS} - ${FROM} :: ${TITLE}" "${URL} ${BODY}"'
+
+############  GLOBAL VARIABLE
+## uncomment to load urls in browser automatically.
+# xdg-open=true
 
 ## url shortener [ optional :: require surl python command ]
 ## can be replaced by any url shortener command that reads from stdin and output to stdout
@@ -36,12 +53,6 @@ allow_file_shorten='false'
 ## for example : to use mpv and sound-theme-freedesktop
 # DING='mpv /usr/share/sounds/freedesktop/stereo/bell.oga'
 # DING_MIRROR='mpv /usr/share/sounds/freedesktop/stereo/message.oga'
-
-
-## uncomment to convert icon format and size
-## ( some notification daemon only support png )
-# ICONFORMAT=".png"
-# ICONSIZE="-resize 32x32"
 
 ## uncomment to automatically copy links to clipboard [ require xclip command ]
 # cp_link=true
