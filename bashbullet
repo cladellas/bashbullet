@@ -106,6 +106,11 @@ export -f new_push
 
 # add handler for tray icon left click
 on_click() {
+	if ps -ef|grep -e yad |grep disp_tmp >/dev/null;then
+		echo duplicated inbox window.
+		return 0
+	fi
+
 	YADKEY=${RANDOM}
 
 	# aggregate all messages and sort by received time
@@ -173,24 +178,33 @@ j_push(){ jshon -e pushes -e $@ <<< "$RAWMSG" ;}
 
 mirrored(){
 	# use sed instead of jshon to parse
+	TYPE=`echo $line|sed -e 's/.*type":"//g' -e 's/",".*//g'`
 	FROM=$(decode_name `echo $line|sed -e 's/.*source_device_iden":"//g' -e 's/",".*//g'`)
 	TITLE=`echo $line|sed -e 's/.*title":"//g' -e 's/",".*//g'`
-	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g'`
+	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g' -e 's/"}$//' -e 's/"}}.*//'`
 	APP=`echo $line|sed -e 's/.*application_name":"//g' -e 's/",".*//g'`
-	ICO=`echo  $line|sed -e 's/.*icon":"//g' -e 's/"}}.*//g'`
-	ICON=`mktemp -u --tmpdir ${0##*/}.ico.XXXXXXXX`
-	echo -e $ICO |tr -d '\n' |tr -d '\' 2>/dev/null|base64 -d > $ICON
- 	if [ ! -z $ICONFORMAT ];then
- 		eval convert "$ICON" $ICONSIZE "$ICON${ICONFORMAT}"
- 	fi
- 	if [ ! -z "$mirror_command" ];then
-		eval "$mirror_command"
+
+	# only support copy link from phone's clipboard to PC
+	# PC to phone's clipboard not yet supported
+	if [ $TYPE == clip ];then
+		printf $BODY|tr -d '\'|xclip -sel clip
+		notify-send -t 5000 "text copied from :: $FROM" "$BODY"
 	else
-		# use printf to display special character (e.g. \n). use sed to prevent 'printf *' being interpreted as 'ls'
-	 	notify-send -t 5000 -a "$APP" -i ${ICON}${ICONFORMAT} "$APP $FROM :: $TITLE" "$(printf "`sed 's/\*/\\\*/g' <<< "$BODY"`")"
+		ICO=`echo  $line|sed -e 's/.*icon":"//g' -e 's/"}}.*//g'`
+		ICON=`mktemp -u --tmpdir ${0##*/}.ico.XXXXXXXX`
+		echo -e $ICO |tr -d '\n' |tr -d '\' 2>/dev/null|base64 -d > $ICON
+	 	if [ ! -z $ICONFORMAT ];then
+	 		eval convert "$ICON" $ICONSIZE "$ICON${ICONFORMAT}"
+	 	fi
+	 	if [ ! -z "$mirror_command" ];then
+			eval "$mirror_command"
+		else
+			# use printf to display special character (e.g. \n). use sed to prevent 'printf *' being interpreted as 'ls'
+		 	notify-send -t 5000 -a "$APP" -i ${ICON}${ICONFORMAT} "$APP $FROM :: $TITLE" "$(printf "`sed 's/\*/\\\*/g' <<< "$BODY"`")"
+		fi
+	        ( sleep 10; rm ${ICON}* ) &
 	fi
 	[ ! -z DING_MIRROR ] && eval $DING_MIRROR &
-        rm ${ICON}*
 }
 save(){
 	( eval echo "\ $FROM \>\> $TO"
@@ -272,7 +286,7 @@ tickle_detect(){
 	while true ; do
 	    if read -r line; then
 		if grep push <<< $line >/dev/null 2>/dev/null;then
-			if grep encrypted <<< $line >/dev/null 2>/dev/null;then
+			if grep 'push":{"encrypted' <<< $line >/dev/null 2>/dev/null;then
 				if [ -z $my_key ];then
 					notify-send "Bashbullet Warning" "Mirror notification is encrypted, please put your key in ~/.bashbullet/config or it won't work"
 				else
@@ -282,7 +296,7 @@ tickle_detect(){
 						mirrored
 					fi
 				fi
-			elif grep mirror <<< $line >/dev/null 2>/dev/null;then
+			elif grep -e 'type":"mirror' -e 'type":"clip' <<< $line >/dev/null 2>/dev/null;then
 				mirrored
 			else
 				get_msg `date --date="-15sec" +%s` check_dismissed
