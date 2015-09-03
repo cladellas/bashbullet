@@ -42,7 +42,15 @@ API_KEY=''
 ## keygen.js is either located in the bashbullet folder or in /usr/share/bashbullet/
 ## if you don't know your identity. use the following command to retrieve it :
 ##   source ~/.bashbullet/config; curl -s -X GET --header "Access-Token: $API_KEY" https://api.pushbullet.com/v2/users/me|jshon -e iden
-#my_key=''
+# my_key=''
+
+## uncomment to disable sms notification
+## bashbullet doesn't support SMS sync. Pushbullet won't mirror SMS notification as mirrored message either.
+## thus, no push or mirrored message will be displayed on the PC upon receiving a SMS.
+## but bashbullet can detect the SMS sync event and pop up a notification.
+## it's not much. sender, title ,and content are all unsupported.
+## if this feature is not helpful for you. you can disable it.
+# disable_sms='true'
 
 ############  GLOBAL VARIABLE
 ## uncomment to load urls in browser automatically.
@@ -62,4 +70,8 @@ allow_file_shorten='false'
 # DING_MIRROR='mpv /usr/share/sounds/freedesktop/stereo/message.oga'
 
 ## uncomment to automatically copy links to clipboard [ require xclip command ]
+## this has nothing to do with universal copy and paste.
+## however, bashbullet would copy everything from phone's clipboard if universal copy-
+## and-paste is enabled on the phone regardless of this setting
+## But it won't copy texts from clipboard to the phone.
 # cp_link=true

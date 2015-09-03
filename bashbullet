@@ -178,11 +178,11 @@ j_push(){ jshon -e pushes -e $@ <<< "$RAWMSG" ;}
 
 mirrored(){
 	# use sed instead of jshon to parse
-	TYPE=`echo $line|sed -e 's/.*type":"//g' -e 's/",".*//g'`
-	FROM=$(decode_name `echo $line|sed -e 's/.*source_device_iden":"//g' -e 's/",".*//g'`)
-	TITLE=`echo $line|sed -e 's/.*title":"//g' -e 's/",".*//g'`
-	BODY=`echo $line|sed -e 's/.*body":"//g' -e 's/",".*//g' -e 's/"}$//' -e 's/"}}.*//'`
-	APP=`echo $line|sed -e 's/.*application_name":"//g' -e 's/",".*//g'`
+	TYPE=`sed -e 's/.*type":"//g' -e 's/",".*//g' <<< $line`
+	FROM=$(decode_name `sed -e 's/.*source_device_iden":"//g' -e 's/".*//g' <<< $line`)
+	TITLE=`sed -e 's/.*title":"//g' -e 's/",".*//g' <<< $line`
+	BODY=`sed -e 's/.*body":"//g' -e 's/",".*//g' -e 's/"}$//' -e 's/"}}.*//' <<< $line`
+	APP=`sed -e 's/.*application_name":"//g' -e 's/",".*//g' <<< $line`
 
 	# only support copy link from phone's clipboard to PC
 	# PC to phone's clipboard not yet supported
@@ -292,12 +292,24 @@ tickle_detect(){
 				else
 					line=$(printf `sed -e 's/.*ciphertext":"//' -e 's/"}}.*//g' <<< $line`|tr -d '\'|tr -d '\n')
 					line=`$SRC/dec.js $my_key "$line"`
+
 					if ! echo "$line" |grep '"type":"dismissal"' > /dev/null;then
 						mirrored
 					fi
 				fi
 			elif grep -e 'type":"mirror' -e 'type":"clip' <<< $line >/dev/null 2>/dev/null;then
 				mirrored
+			elif grep 'type":"sms_changed' <<< $line >/dev/null 2>/dev/null;then
+			    if [ -z $disable_sms ];then
+				# suppress SMS notification to one within 15 seconds
+				# SMS Sync is unsupported, but limited notification can be acheived.
+				[ -z $SMSTIMESTAMP ] && SMSTIMESTAMP=`date --date="-16sec" +%s`
+				if [  $[`date +%s`-$SMSTIMESTAMP] -gt 15 ];then
+					FROM=$(decode_name `sed -e 's/.*source_device_iden":"//g' -e 's/".*//g'  <<< $line`)
+					notify-send "$FROM :: SMS sent/received" "`date +%r`"
+				fi
+				SMSTIMESTAMP=`date +%s`
+			    fi
 			else
 				get_msg `date --date="-15sec" +%s` check_dismissed
 			fi

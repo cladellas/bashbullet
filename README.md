@@ -19,8 +19,9 @@ Bashbullet
  jshon  
  libnotify  
  yad  
+ xclip (clipboard support)   
+   
  surl [optional: url shortener]   
- xclip [optional: copy to clipboard]   
  atob [optional: nodejs module for encryption support]   
  btoa [optional: nodejs module for encryption support]   
  node-forge [optional: nodejs module for encryption support]   
