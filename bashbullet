@@ -28,10 +28,13 @@ if [ -f ~/.bashbullet/config ];then
 	[ -z $API_KEY ] && API_KEY=$access_token
 	[ ! -f ~/.bashbullet/.last_timestamp ] && date +%s > ~/.bashbullet/.last_timestamp
 	LASTTIME=`cat ~/.bashbullet/.last_timestamp`
-	[ -z $allow_file_shorten ] && allow_file_shorten=false
+	for i in disable_sms xdg-open cp_link allow_file_shorten;do
+		eval test -z \$$i && declare $i=false
+	done
 	targets=0
 	while(( 1 ));do
 		eval test -z \"\${target_filter_$targets}\" && break
+		eval test -z \"\${skip_$targets}\" && declare skip_$targets=false
 		let targets++
 	done
 	if [ -f /usr/share/bashbullet/pushbullet.svg ];then
@@ -267,14 +270,14 @@ disp_save(){
 	fi
 	MSG=$(eval echo `j_push $ENTRY | egrep 'title|body'|cut -d : -f2-`)
 	URL=$(eval echo `j_push $ENTRY | egrep '_url|\"url'|cut -d : -f2-`)
-	if [[ ! -z $cp_link && ! -z "$URL" ]];then
+	if [[ $cp_link == true && ! -z "$URL" ]];then
 		eval echo "$URL"|xclip -sel clip
 	fi
 	if [[  $allow_file_shorten == "true" || $TYPE != file ]];then
 		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 	fi
 	if eval test -z \"\$custom_command_$j\" ;then
-		[[ ! -z $xdg_open && ! -z "$URL" ]] && xdg-open "$URL"
+		[[ $xdg_open == true && ! -z "$URL" ]] && xdg-open "$URL"
 		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
 	else
 		eval eval \$custom_command_$j &
@@ -344,8 +347,8 @@ tickle_detect(){
 			elif grep -e 'type":"mirror' -e 'type":"clip' <<< $line >/dev/null 2>/dev/null;then
 				mirrored
 			elif grep 'type":"sms_changed' <<< $line >/dev/null 2>/dev/null;then
-			    if [ -z $disable_sms ];then
-				# suppress SMS notification to one within 15 seconds
+			    if [ $disable_sms == false ];then
+				# suppress SMS notification to one within 30 seconds
 				# SMS Sync is unsupported, but limited notification can be acheived.
 				[ -z $SMSTIMESTAMP ] && SMSTIMESTAMP=`date --date="-16sec" +%s`
 				if [  $[`date +%s`-$SMSTIMESTAMP] -gt 15 ];then
