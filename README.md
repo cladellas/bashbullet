@@ -2,16 +2,22 @@ Bashbullet
 ===================================  
  A pushbullet systray notification daemon for linux. A simple client to receive, mirror and send pushes.  
    
- Bashbullet is a pushbullet daemon designed to be highly customizable and scriptable.
- Virtually everyone with a basic understanding of bash can easily hack the source.
- I decided to start this project because I need a client that can not only receive and send pushes
- on linux but also trigger custom script on my desktop. Simply put your command 
- in config file would satiate most needs for scripting.
+ Bashbullet is a pushbullet daemon designed to be highly customizable.
+ It's not just for popping up notification, but also for triggering custom scripts !!.
    
  Bashbullet would only display new messages after first run.
  To retrieve older pushes feel free to hack ~/.bashbullet/.last_timestamp
  Bashbullet will display ALL pushes across every device associated with the user.
  See config_example to set up target_filter to only display message sent to selected devices  
+   
+### Feature :   
+ receive, send, mirror pushes and send files.   
+ multiple devices support.   
+ send sms by phone from bashbullet.   
+ encryption support for incoming notifications   
+ copy texts from phone's clipboard.   
+ copy links automatically.   
+ customizable script, notification, url shortener and more.   
 
 ### Prerequisite  
  node.js  
