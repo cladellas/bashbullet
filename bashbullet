@@ -282,7 +282,7 @@ disp_save(){
 	else
 		eval eval \$custom_command_$j &
 	fi
-	if eval test -z \"\${skip_$j}\" ;then
+	if eval test \"\${skip_$j}\" == "false" ;then
 		save
 	else
 		touch ~/.bashbullet/received/${TIME}_`echo $TO|tr -d ' '`_dismissed
