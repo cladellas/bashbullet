@@ -340,7 +340,7 @@ tickle_detect(){
 					line=$(printf `sed -e 's/.*ciphertext":"//' -e 's/"}}.*//g' <<< $line`|tr -d '\'|tr -d '\n')
 					line=`$SRC/dec.js $my_key "$line"`
 
-					if ! echo "$line" |grep '"type":"dismissal"' > /dev/null;then
+					if ! echo "$line" |grep '"type":"dismissal"' >/dev/null 2>/dev/null ;then
 						mirrored
 					fi
 				fi
@@ -362,6 +362,8 @@ tickle_detect(){
 			fi
 			date +%s > ~/.bashbullet/.last_timestamp
 		fi
+	    else
+		echo wscat dies  && break
 	    fi
 	done
 }
@@ -386,5 +388,5 @@ fi
 get_msg $LASTTIME dont_care
 date +%s > ~/.bashbullet/.last_timestamp
 
-# wscat | remove color code | extract json
+# wscat
 wscat -c wss://websocket.pushbullet.com/subscribe/$API_KEY|tickle_detect
