@@ -55,7 +55,7 @@ API_KEY=''
 
 ############  GLOBAL VARIABLE
 ## uncomment to load urls in browser automatically.
-# xdg-open=true
+# xdg_open=true
 
 ## url shortener [ optional :: require surl python command ]
 ## can be replaced by any url shortener command that reads from stdin and output to stdout

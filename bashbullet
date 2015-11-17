@@ -28,7 +28,7 @@ if [ -f ~/.bashbullet/config ];then
 	[ -z $API_KEY ] && API_KEY=$access_token
 	[ ! -f ~/.bashbullet/.last_timestamp ] && date +%s > ~/.bashbullet/.last_timestamp
 	LASTTIME=`cat ~/.bashbullet/.last_timestamp`
-	for i in disable_sms xdg-open cp_link allow_file_shorten;do
+	for i in disable_sms xdg_open cp_link allow_file_shorten;do
 		eval test -z \$$i && declare $i=false
 	done
 	targets=0
@@ -277,7 +277,7 @@ disp_save(){
 		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 	fi
 	if eval test -z \"\$custom_command_$j\" ;then
-		[[ $xdg-open == true && ! -z "$URL" ]] && xdg-open "$URL"
+		[[ $xdg_open == true && ! -z "$URL" ]] && xdg_open "$URL"
 		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
 	else
 		eval eval \$custom_command_$j &
