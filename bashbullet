@@ -228,7 +228,7 @@ mirrored(){
 	TYPE=`sed -e 's/.*type":"//g' -e 's/",".*//g' <<< $line`
 	FROM=$(decode_name `sed -e 's/.*source_device_iden":"//g' -e 's/".*//g' <<< $line`)
 	TITLE=`sed -e 's/.*title":"//g' -e 's/",".*//g' <<< $line`
-	BODY=`sed -e 's/.*body":"//g' -e 's/",".*//g' -e 's/"}$//' -e 's/"}}.*//' <<< $line`
+	BODY=`sed -e 's/.*body":"//g' -e 's/",".*//g' -e 's/"}$//' -e 's/"}.*//' <<< $line`
 	APP=`sed -e 's/.*application_name":"//g' -e 's/",".*//g' <<< $line`
 
 	# only support copy link from phone's clipboard to PC
@@ -237,7 +237,7 @@ mirrored(){
 		printf $BODY|tr -d '\'|xclip -sel clip
 		notify-send -t 5000 "text copied from :: $FROM" "$BODY"
 	else
-		ICO=`echo  $line|sed -e 's/.*icon":"//g' -e 's/"}}.*//g'`
+		ICO=`echo  $line|sed -e 's/.*icon":"//g' -e 's/"}.*//g'`
 		ICON=`mktemp -u --tmpdir ${0##*/}.ico.XXXXXXXX`
 		echo -e $ICO |tr -d '\n' |tr -d '\' 2>/dev/null|base64 -d > $ICON
 	 	if [ ! -z $ICONFORMAT ];then
@@ -277,7 +277,7 @@ disp_save(){
 		[ ! -z "$SHORT_URL" ] && URL=`eval echo "$URL"|eval $SHORT_URL`
 	fi
 	if eval test -z \"\$custom_command_$j\" ;then
-		[[ $xdg_open == true && ! -z "$URL" ]] && xdg-open "$URL"
+		[[ $xdg-open == true && ! -z "$URL" ]] && xdg-open "$URL"
 		notify-send -t 7000 "${TYPE} : ${FROM} >> ${TO}" "$URL $MSG"
 	else
 		eval eval \$custom_command_$j &

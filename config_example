@@ -18,7 +18,8 @@ API_KEY=''
 # target_filter_2='DEVICE NAME 2'
 
 ## uncomment to customize notification commands for corresponding devices [ optional ]
-# custom_command_0='notify-send "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
+## for example : set notification timeout to 5 seconds  for the first device (target_filter_0)
+# custom_command_0='notify-send -t 5000 "${TYPE} : from ${FROM} to ${TO}" "${URL} ${MSG}"'
 # custom_command_1='xdg-open "${URL}"'
 
 ## uncomment to disable notification and skip inbox for corresponding devices
